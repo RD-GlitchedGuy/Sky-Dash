@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#120a3a">
+<title>Sky Dash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect x='1' y='1' width='14' height='14' fill='%2300eaff' stroke='%23000' stroke-width='2'/%3E%3Crect x='5' y='5' width='6' height='6' fill='%23ffe14f' stroke='%23000'/%3E%3C/svg%3E">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<!-- Anzeige im Spiel -->
+<div id="hud" class="hidden">
+  <div id="progress"><div id="bar"><div id="barFill"></div></div><span id="pct">0%</span></div>
+  <button id="btnPause" class="hudbtn" aria-label="Pause">❚❚</button>
+  <div id="practiceBtns" class="hidden">
+    <button id="cpAdd" class="hudbtn cp" aria-label="Checkpoint setzen">◆</button>
+    <button id="cpDel" class="hudbtn cp del" aria-label="Checkpoint löschen">✕</button>
+  </div>
+</div>
+
+<!-- Hauptmenü -->
+<section id="scr-menu" class="screen hidden">
+  <h1 class="logo"><span class="l1">SKY</span><span class="l2">DASH</span></h1>
+  <div class="menu-row">
+    <button class="round side" id="btnIcons" aria-label="Icons"><canvas id="menuIcon" width="96" height="96"></canvas></button>
+    <button class="round play" id="btnPlay" aria-label="Spielen"><span>▶</span></button>
+    <button class="round side" id="btnSettings" aria-label="Einstellungen"><span>⚙</span></button>
+  </div>
+  <div class="menu-bottom">
+    <button class="pill" id="btnCredits">Credits</button>
+    <button class="pill" id="btnFull">Vollbild</button>
+  </div>
+  <div class="hint">Leertaste, Klick oder Tippen = Springen</div>
+</section>
+
+<!-- Levelauswahl -->
+<section id="scr-levels" class="screen hidden">
+  <button class="back" data-go="menu" aria-label="Zurück">◀</button>
+  <div class="lvl-wrap">
+    <button class="arrow" id="lvPrev" aria-label="Vorheriges Level">‹</button>
+    <div id="lvCard" class="card"></div>
+    <button class="arrow" id="lvNext" aria-label="Nächstes Level">›</button>
+  </div>
+  <div class="dots" id="lvDots"></div>
+</section>
+
+<!-- Icons -->
+<section id="scr-icons" class="screen hidden">
+  <button class="back" data-go="menu" aria-label="Zurück">◀</button>
+  <div class="panel wide">
+    <h2>Icon-Garage</h2>
+    <canvas id="iconPreview" width="320" height="140"></canvas>
+    <div class="grid" id="iconGrid"></div>
+    <h3>Farbe 1</h3><div class="swatches" id="col1"></div>
+    <h3>Farbe 2</h3><div class="swatches" id="col2"></div>
+  </div>
+</section>
+
+<!-- Einstellungen -->
+<section id="scr-settings" class="screen hidden">
+  <button class="back" data-go="menu" aria-label="Zurück">◀</button>
+  <div class="panel">
+    <h2>Einstellungen</h2>
+    <label class="row">Musik <input type="range" id="setMusic" min="0" max="100"></label>
+    <label class="row">Effekte <input type="range" id="setSfx" min="0" max="100"></label>
+    <label class="row">Prozent anzeigen <input type="checkbox" id="setPct"></label>
+    <label class="row">Leuchteffekte <input type="checkbox" id="setGlow"></label>
+    <button class="pill danger" id="btnReset">Fortschritt löschen</button>
+  </div>
+</section>
+
+<!-- Credits -->
+<section id="scr-credits" class="screen hidden">
+  <button class="back" data-go="menu" aria-label="Zurück">◀</button>
+  <div class="panel credits">
+    <h2>Credits</h2>
+    <p class="studio">SKY GAMES</p>
+    <p><b>Spielidee &amp; Leveldesign:</b> Sky Games (rd-glitchedguy)</p>
+    <p><b>Programmierung:</b> Sky Games mit Claude (Anthropic)</p>
+    <p><b>Grafik &amp; Musik:</b> komplett selbst erzeugt – im Code gezeichnet und live im Browser komponiert</p>
+    <p><b>Schrift:</b> „Russo One“ von Jovanny Lemonad (SIL Open Font License, über Google Fonts)</p>
+    <p class="small">Inspiriert von <i>Geometry Dash</i> von RobTop Games. Sky Dash ist ein eigenständiges Fanprojekt, nicht mit RobTop Games verbunden und verwendet keine Grafiken, Sounds oder Musik aus Geometry Dash.</p>
+  </div>
+</section>
+
+<!-- Pause -->
+<section id="scr-pause" class="screen dim hidden">
+  <div class="panel">
+    <h2 id="pauseTitle">Pause</h2>
+    <div class="pause-stats" id="pauseStats"></div>
+    <div class="btn-row">
+      <button class="round mid" id="pResume" aria-label="Weiter">▶</button>
+      <button class="round mid alt" id="pRestart" aria-label="Neustart">↻</button>
+      <button class="round mid alt2" id="pPractice" aria-label="Übungsmodus">◆</button>
+      <button class="round mid alt3" id="pMenu" aria-label="Menü">☰</button>
+    </div>
+    <p class="small" id="practiceInfo">◆ = Übungsmodus an/aus (Checkpoints mit Z setzen, X löschen)</p>
+  </div>
+</section>
+
+<!-- Level geschafft -->
+<section id="scr-complete" class="screen dim hidden">
+  <div class="panel">
+    <h2 class="big" id="cTitle">LEVEL GESCHAFFT!</h2>
+    <div id="cStats" class="pause-stats"></div>
+    <div id="cCoins" class="coins"></div>
+    <div class="btn-row">
+      <button class="round mid alt" id="cRestart" aria-label="Nochmal">↻</button>
+      <button class="round mid alt3" id="cMenu" aria-label="Levelauswahl">☰</button>
+    </div>
+  </div>
+</section>
+
+<div id="rotate">Bitte dreh dein Gerät ins Querformat ↻</div>
+
+<script src="../js/physics.js"></script>
+<script src="../js/levels.js"></script>
+<script src="../js/audio.js"></script>
+<script src="../js/render.js"></script>
+<script src="../js/game.js"></script>
+</body>
+</html>
