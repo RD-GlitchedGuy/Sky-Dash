@@ -18,9 +18,9 @@ spike 18 0 2
 use stepup 28
 saw 39 2.2 1.6
 spike 44 0 2
-block 52 0 3 2
-saw 56 0 1.6
-spike 59 0 2
+block 52 0 3 1
+spike 56 0 2
+saw 61 2.8 1.4
 pad 66 0
 spike 68 0 3
 coin 70 4

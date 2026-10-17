@@ -1,7 +1,7 @@
 /* Sky Dash — Spielsteuerung, Menüs, Speicherstand (Sky Games) */
 (function () {
   'use strict';
-  const P = SDPhys, R = SDRender, A = SDAudio, T = P.T;
+  const P = SDPhys, R = SDRender, A = SDAudio, T = P.T, NET = window.SDOnline;
   const $ = id => document.getElementById(id);
   const cv = $('game');
   R.init(cv);
@@ -106,11 +106,12 @@
   }
 
   // ---------- Bildschirme ----------
-  const screens = ['menu', 'levels', 'icons', 'settings', 'credits', 'pause', 'complete'];
+  const screens = ['menu', 'levels', 'icons', 'settings', 'credits', 'online', 'pause', 'complete'];
   function show(name) {
     for (const n of screens) $('scr-' + n).classList.toggle('hidden', n !== name);
     $('hud').classList.toggle('hidden', !(mode === 'play' || mode === 'pause'));
-    if (['menu', 'levels', 'icons', 'settings', 'credits'].includes(name)) menuScreen = name;
+    if (['menu', 'levels', 'icons', 'settings', 'credits', 'online'].includes(name)) menuScreen = name;
+    if (name === 'online') renderOnline();
     if (name === 'levels') renderCard(0);
     if (name === 'icons') buildIconKit();
     if (name === 'settings') loadSettings();
@@ -237,6 +238,37 @@
   $('btnIcons').onclick = () => { A.sfx('click'); show('icons'); };
   $('btnSettings').onclick = () => { A.sfx('click'); show('settings'); };
   $('btnCredits').onclick = () => { A.sfx('click'); show('credits'); };
+
+  // ---------- Online ----------
+  NET.name = save.name || ('Spieler' + Math.floor(Math.random() * 900 + 100));
+  NET.icon = save.icon;
+  $('onName').value = NET.name;
+  $('onName').oninput = e => { NET.name = save.name = e.target.value.trim().slice(0, 16) || 'Spieler'; store(); };
+  $('onName').addEventListener('keydown', e => e.stopPropagation());
+  $('onCode').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter') $('onJoin').click(); });
+  $('btnOnline').onclick = () => { A.sfx('click'); show('online'); };
+  $('onPublic').onclick = () => { A.sfx('click'); NET.joinPublic(); };
+  $('onCreate').onclick = () => { A.sfx('click'); NET.create(null, false); };
+  $('onJoin').onclick = () => { A.sfx('click'); NET.join($('onCode').value, false); };
+  $('onLeave').onclick = () => { A.sfx('click'); NET.leave(); };
+  const levelName = id => { const l = window.LEVELS.find(v => v.id === id); return l ? l.name : 'im Menü'; };
+  function renderOnline() {
+    const on = NET.connected();
+    $('onLobby').classList.toggle('hidden', on || NET.status === 'connecting');
+    $('onRoom').classList.toggle('hidden', !on);
+    $('onRoomCode').textContent = NET.isPublic ? 'Öffentlich' : (NET.room || '');
+    $('onStatus').textContent = NET.status === 'connecting' ? 'Verbinde …' : NET.status === 'error' ? NET.error
+      : on ? (NET.isPublic ? 'Alle im öffentlichen Raum spielen zusammen.' : 'Schick den Code an deine Freunde!') : 'Spiel mit anderen zusammen.';
+    if (on) {
+      const rows = [{ name: NET.name + ' (du)', lv: NET.last.lv, p: NET.last.p }].concat(Object.values(NET.players));
+      $('onList').innerHTML = rows.map(p => `<div><span>${String(p.name || '?').replace(/[<>&]/g, '')}</span><span>${p.lv ? levelName(p.lv) + ' · ' + (p.p || 0) + '%' : 'im Menü'}</span></div>`).join('');
+    }
+    const n = NET.count();
+    $('onHud').classList.toggle('hidden', !n);
+    $('onHud').textContent = '🌐 ' + n + ' Spieler';
+  }
+  NET.onChange = renderOnline;
+  setInterval(() => { if (mode !== 'play') NET.update({ lv: null, p: 0 }); renderOnline(); }, 1000);
   $('btnFull').onclick = () => {
     A.sfx('click');
     const d = document;
@@ -459,6 +491,7 @@
     const endCam = L.length + 2.5 - R.W / R.U;
     const want = Math.min(s.x - R.camOff, endCam);
     camX = want;
+    NET.update({ lv: L.id, x: +s.x.toFixed(2), y: +s.y.toFixed(2), rot: +rot.toFixed(2), mode: s.mode, g: s.g, dead: s.dead, done: s.done, p: pct(), at: attempt });
 
     if (!s.dead && !s.done) {
       trail.push([s.x + 0.5, s.y + 0.5]);
@@ -497,6 +530,20 @@
       if (x < -50 || x > R.W + 50) continue;
       ctx.fillStyle = 'rgba(92,255,122,0.85)'; ctx.beginPath();
       ctx.moveTo(x, y - R.U * 0.4); ctx.lineTo(x + R.U * 0.28, y); ctx.lineTo(x, y + R.U * 0.4); ctx.lineTo(x - R.U * 0.28, y); ctx.fill();
+    }
+    // Online-Mitspieler als Geister
+    for (const id in NET.players) {
+      const p = NET.players[id];
+      if (p.lv !== L.id || p.dead || p.dx === undefined) continue;
+      const gx = R.sx(p.dx + 0.5, camX), gy = R.sy(p.dy + 0.5);
+      if (gx < -R.U * 2 || gx > R.W + R.U * 2) continue;
+      const gi = p.icon || { id: 0, c1: '#ffffff', c2: '#888888' };
+      ctx.save(); ctx.globalAlpha = 0.5;
+      if (p.mode === 2) R.wave(gx, gy, R.U * 0.95, p.rot || 0, gi.c1, gi.c2);
+      else if (p.mode === 1) R.ship(gx, gy, R.U * 1.15, p.rot || 0, p.g === -1, gi.id, gi.c1, gi.c2, now);
+      else R.icon(ctx, gx, gy, R.U, p.rot || 0, gi.id, gi.c1, gi.c2);
+      ctx.restore();
+      R.text(String(p.name || '?').slice(0, 16), gx, gy - R.U * 0.95, R.U * 0.36, '#fff', 'center', 0.85);
     }
     const ic = save.icon;
     if (s.mode === 2) R.waveTrail(trail, R.hex(ic.c1), R.hex(ic.c2), camX);
@@ -547,6 +594,8 @@
     R.icon(R.ctx, x, y, R.U, m.rot, save.icon.id, save.icon.c1, save.icon.c2);
   }
 
+  const speedOf = id => { const l = window.LEVELS.find(v => v.id === id); return l ? l.speed : 0; };
+
   function frame(ts) {
     const dt = Math.min(0.05, (ts - last) / 1000); last = ts; now += dt;
     const pulse = A.pulse();
@@ -557,6 +606,7 @@
       introFrame(introT);
     } else if (mode === 'play') {
       updatePlay(dt); R.updateFx(dt); drawPlay(pulse);
+      NET.step(dt, speedOf);
     } else if (mode === 'pause' || mode === 'complete') {
       if (mode === 'complete') { R.updateFx(dt); if (s.done) { doneT += dt; } }
       drawPlay(0);

@@ -45,6 +45,7 @@
 <div id="hud" class="hidden">
   <div id="progress"><div id="bar"><div id="barFill"></div></div><span id="pct">0%</span></div>
   <button id="btnPause" class="hudbtn" aria-label="Pause">❚❚</button>
+  <div id="onHud" class="hidden"></div>
   <div id="practiceBtns" class="hidden">
     <button id="cpAdd" class="hudbtn cp" aria-label="Checkpoint setzen">◆</button>
     <button id="cpDel" class="hudbtn cp del" aria-label="Checkpoint löschen">✕</button>
@@ -61,6 +62,7 @@
     <button class="round side" id="btnSettings" aria-label="Einstellungen"><span>⚙</span></button>
   </div>
   <div class="menu-bottom">
+    <button class="pill online" id="btnOnline">🌐 Online</button>
     <button class="pill" id="btnCredits">Credits</button>
     <button class="pill" id="btnFull">Vollbild</button>
   </div>
@@ -106,6 +108,26 @@
   </div>
 </section>
 
+<!-- Online -->
+<section id="scr-online" class="screen hidden">
+  <button class="back" data-go="menu" aria-label="Zurück">◀</button>
+  <div class="panel wide">
+    <h2><span class="gtext" data-t="Online">Online</span></h2>
+    <label class="row">Dein Name <input type="text" id="onName" maxlength="16" autocomplete="off"></label>
+    <div id="onLobby">
+      <div class="btn-row"><button class="pill" id="onPublic">🌍 Öffentlicher Raum</button><button class="pill" id="onCreate">＋ Eigenen Raum erstellen</button></div>
+      <div class="btn-row"><input type="text" id="onCode" maxlength="12" placeholder="Raumcode" autocomplete="off"><button class="pill" id="onJoin">Beitreten</button></div>
+    </div>
+    <div id="onRoom" class="hidden">
+      <p class="roomcode">Raum: <b id="onRoomCode"></b></p>
+      <div id="onList" class="plist"></div>
+      <p class="small">Wähle ein Level – alle im selben Level siehst du als Geister mitspielen.</p>
+      <div class="btn-row"><button class="pill" data-go="levels">Level wählen</button><button class="pill danger" id="onLeave">Raum verlassen</button></div>
+    </div>
+    <p class="small" id="onStatus"></p>
+  </div>
+</section>
+
 <!-- Credits -->
 <section id="scr-credits" class="screen hidden">
   <button class="back" data-go="menu" aria-label="Zurück">◀</button>
@@ -114,6 +136,7 @@
     <p class="studio"><span class="gtext" data-t="SKY GAMES">SKY GAMES</span></p>
     <p><b>Ein Spiel von:</b> RD-GlitchedGuy</p>
     <p><b>Spielidee, Leveldesign, Wave-Modus &amp; Logo-Animation:</b> RD-GlitchedGuy (Sky Games)</p>
+    <p><b>Online-Modus:</b> PeerJS (MIT-Lizenz)</p>
     <p><b>Code-Hilfe:</b> Claude (Anthropic)</p>
     <p><b>Grafik &amp; Musik:</b> komplett selbst erzeugt – im Code gezeichnet und live im Browser komponiert</p>
     <p><b>Schrift:</b> „Lilita One“ von Juan Montoreano (SIL Open Font License, über Google Fonts)</p>
@@ -155,6 +178,8 @@
 <script src="../js/levels.js"></script>
 <script src="../js/audio.js"></script>
 <script src="../js/render.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="../js/online.js"></script>
 <script src="../js/game.js"></script>
 </body>
 </html>

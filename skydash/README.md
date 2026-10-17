@@ -26,10 +26,15 @@ Esc oder P = Pause, R = Neustart. Im Übungsmodus: Z = Checkpoint setzen, X = Ch
 Alle Dateien und Ordner so wie sie sind ins Repository hochladen (es sind weniger als 20 Dateien),
 dann unter **Settings → Pages** den Branch `main` und `/ (root)` wählen.
 
+## Online-Modus
+
+Im Menü auf **🌐 Online**: dem öffentlichen Raum beitreten oder einen eigenen Raum mit Code erstellen und den Code an Freunde schicken. Alle, die dasselbe Level spielen, sieht man als Geister mit Namen. Läuft über PeerJS (direkte Verbindung zwischen den Browsern, der Gastgeber verteilt die Daten).
+
 ## Credits
 
 - Logo-Animation, Spielidee & Leveldesign: Sky Games (rd-glitchedguy)
 - Programmierung: Sky Games mit Claude (Anthropic)
 - Grafik & Musik: komplett selbst erzeugt (im Code gezeichnet, Musik live im Browser komponiert)
+- Online-Modus: PeerJS (MIT-Lizenz)
 - Schrift: „Lilita One“ von Juan Montoreano, SIL Open Font License (Google Fonts)
 - Inspiriert von *Geometry Dash* von RobTop Games. Sky Dash ist ein eigenständiges Fanprojekt, nicht mit RobTop Games verbunden, und enthält keine Grafiken, Sounds oder Musik aus Geometry Dash.
