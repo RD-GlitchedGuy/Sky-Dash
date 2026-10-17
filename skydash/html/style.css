@@ -34,6 +34,8 @@ canvas#game { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 10
 
 .menu-row { display: flex; align-items: center; gap: clamp(16px, 4vw, 48px); }
 .menu-bottom { display: flex; gap: 14px; }
+.byline { font-size: 18px; margin-top: -2vh; -webkit-text-stroke: 4px #000; paint-order: stroke fill; }
+.stats { display: flex; gap: 18px; font-size: 20px; color: #ffe95a; -webkit-text-stroke: 4px #000; paint-order: stroke fill; flex-wrap: wrap; justify-content: center; }
 .hint { font-size: 16px; color: #fff; -webkit-text-stroke: 3px #000; paint-order: stroke fill; }
 
 /* ---------- Knöpfe (grün, dicker schwarzer Rand) ---------- */

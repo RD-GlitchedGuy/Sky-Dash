@@ -19,6 +19,35 @@
     if (raw) { const s = JSON.parse(raw); save = Object.assign(save, s); save.settings = Object.assign({ music: 70, sfx: 80, pct: true, glow: true }, s.settings); }
   } catch (e) { /* kein Speicher verfügbar */ }
   function store() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) { /* egal */ } }
+  window.addEventListener('pagehide', store);
+
+  function statsHtml() {
+    let stars = 0, maxStars = 0, coins = 0, maxCoins = 0, done = 0, att = 0;
+    for (const lv of window.LEVELS) {
+      const sv = save.levels[lv.id] || { best: 0, coins: [], attempts: 0 };
+      maxStars += lv.stars; maxCoins += lv.objs.filter(o => o[0] === T.COIN).length;
+      if (sv.best >= 100) { stars += lv.stars; done++; }
+      coins += sv.coins.length; att += sv.attempts || 0;
+    }
+    return `<span>★ ${stars}/${maxStars}</span><span>● ${coins}/${maxCoins}</span><span>✔ ${done}/${window.LEVELS.length}</span><span>Versuche ${att}</span>`;
+  }
+  $('btnExport').onclick = () => {
+    store();
+    const code = 'SKYDASH1:' + btoa(unescape(encodeURIComponent(JSON.stringify(save))));
+    try { navigator.clipboard.writeText(code); } catch (e) { /* egal */ }
+    prompt('Dein Spielstand-Code (wurde kopiert). Heb ihn gut auf:', code);
+  };
+  $('btnImport').onclick = () => {
+    const code = (prompt('Spielstand-Code einfügen:') || '').trim();
+    if (!code) return;
+    try {
+      if (!code.startsWith('SKYDASH1:')) throw 0;
+      const d = JSON.parse(decodeURIComponent(escape(atob(code.slice(9)))));
+      if (!d || typeof d.levels !== 'object') throw 0;
+      save.levels = d.levels; if (d.icon) save.icon = d.icon; if (d.settings) save.settings = Object.assign(save.settings, d.settings);
+      store(); loadSettings(); A.sfx('coin'); alert('Spielstand geladen!');
+    } catch (e) { alert('Der Code ist ungültig.'); }
+  };
   function lvSave(id) { return save.levels[id] || (save.levels[id] = { best: 0, practice: 0, coins: [], attempts: 0, jumps: 0 }); }
 
   A.musicVol = save.settings.music / 100; A.sfxVol = save.settings.sfx / 100;
@@ -28,7 +57,7 @@
   let mode = 'intro';          // intro | menu | play | pause | complete
   let menuScreen = 'menu';
   let introT = 0, now = 0, last = performance.now();
-  let lvIdx = 0, L = null, s = null, practice = false;
+  let lvIdx = Math.min(+save.last || 0, window.LEVELS.length - 1), L = null, s = null, practice = false;
   let attempt = 1, jumps = 0, playTime = 0, acc = 0, deadT = 0, doneT = 0;
   let hold = false, rot = 0, trail = [], checkpoints = [];
   let col = null, colTarget = null, ceil = 0, flash = 0;
@@ -85,7 +114,7 @@
     if (name === 'levels') renderCard(0);
     if (name === 'icons') buildIconKit();
     if (name === 'settings') loadSettings();
-    if (name === 'menu') drawMenuIcon();
+    if (name === 'menu') { drawMenuIcon(); $('stats').innerHTML = statsHtml(); }
   }
   document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => { A.sfx('click'); show(b.dataset.go); }));
 
@@ -218,7 +247,7 @@
   // ---------- Spielablauf ----------
   function startLevel(i, prac) {
     A.init();
-    lvIdx = i; L = P.prepare(window.LEVELS[i]);
+    lvIdx = i; save.last = i; L = P.prepare(window.LEVELS[i]);
     practice = !!prac; attempt = 1; jumps = 0; playTime = 0; checkpoints = [];
     mode = 'play';
     show(null);
@@ -235,7 +264,7 @@
     col = colorsAt(L, s.x); colTarget = col;
     trail = []; acc = 0; deadT = 0; doneT = 0; flash = 0;
     R.particles = []; R.rings = [];
-    ceil = (s.mode === 1 || s.g === -1) ? 1 : 0;
+    ceil = (s.mode >= 1 || s.g === -1) ? 1 : 0;
     camX = s.x - R.camOff;
     if (!practice || !levelSongOn || first) { A.start(L.song, L.bpm, false); levelSongOn = true; }
     if (!first) { attempt++; lvSave(L.id).attempts++; store(); }
@@ -341,7 +370,7 @@
         }
         case 'pad': R.burst(o.x + 0.5, o.y + 0.2, 14, [[255, 225, 79]], 6, 0.12, 0.5, 10); break;
         case 'portal': {
-          const c = { [T.SHIP]: [255, 90, 214], [T.CUBE]: [92, 255, 122], [T.GUP]: [255, 225, 79], [T.GDOWN]: [79, 200, 255] }[o.t];
+          const c = { [T.SHIP]: [255, 90, 214], [T.CUBE]: [92, 255, 122], [T.GUP]: [255, 225, 79], [T.GDOWN]: [79, 200, 255], [T.WAVE]: [79, 255, 224] }[o.t];
           R.ring(o.x + 0.5, o.y + 1.5, c, 2.6, 0.45); R.burst(o.x + 0.5, o.y + 1.5, 18, [c], 7, 0.14, 0.6); break;
         }
         case 'coin':
@@ -414,6 +443,8 @@
         const target = Math.round(rot / (Math.PI / 2)) * (Math.PI / 2);
         rot += (target - rot) * Math.min(1, dt * 22);
       } else rot += 7.48 * s.g * dt;
+    } else if (s.mode === 2) {
+      rot = -Math.atan2(s.vy, L.speed);
     } else {
       const want = -Math.atan2(s.vy, L.speed) * 0.9;
       rot += (want - rot) * Math.min(1, dt * 14);
@@ -422,7 +453,7 @@
     // Farben
     const ct = colorsAt(L, s.x);
     colTarget = ct; col = lerpCol(col, colTarget, Math.min(1, dt * 2.2));
-    ceil += (((s.mode === 1 || s.g === -1) ? 1 : 0) - ceil) * Math.min(1, dt * 4);
+    ceil += (((s.mode >= 1 || s.g === -1) ? 1 : 0) - ceil) * Math.min(1, dt * 4);
 
     // Kamera
     const endCam = L.length + 2.5 - R.W / R.U;
@@ -431,7 +462,7 @@
 
     if (!s.dead && !s.done) {
       trail.push([s.x + 0.5, s.y + 0.5]);
-      if (trail.length > (s.mode ? 22 : 12)) trail.shift();
+      if (trail.length > (s.mode === 2 ? 70 : s.mode ? 22 : 12)) trail.shift();
       // Funken am Boden
       if (s.mode === 0 && s.grounded && Math.random() < 0.5) {
         R.particles.push({ x: s.x + 0.1, y: s.g === 1 ? s.y + 0.05 : s.y + 0.95, vx: -2 - Math.random() * 3, vy: (Math.random() * 2) * s.g, life: 0.3, max: 0.3, size: 0.1, c: R.hex(save.icon.c2), g: 0 });
@@ -468,10 +499,12 @@
       ctx.moveTo(x, y - R.U * 0.4); ctx.lineTo(x + R.U * 0.28, y); ctx.lineTo(x, y + R.U * 0.4); ctx.lineTo(x - R.U * 0.28, y); ctx.fill();
     }
     const ic = save.icon;
-    R.trail(trail, R.hex(ic.c2), s.mode ? 0.42 : 0.28, camX);
+    if (s.mode === 2) R.waveTrail(trail, R.hex(ic.c1), R.hex(ic.c2), camX);
+    else R.trail(trail, R.hex(ic.c2), s.mode ? 0.42 : 0.28, camX);
     if (!s.dead && !(s.done && doneT > 0.25)) {
       const cx = R.sx(s.x + 0.5, camX), cy = R.sy(s.y + 0.5);
       if (s.mode === 0) R.icon(ctx, cx, cy, R.U, rot, ic.id, ic.c1, ic.c2);
+      else if (s.mode === 2) R.wave(cx, cy, R.U * 0.95, rot, ic.c1, ic.c2);
       else R.ship(cx, cy, R.U * 1.15, rot, s.g === -1, ic.id, ic.c1, ic.c2, now);
     }
     if (s.done && doneT > 0.2 && doneT < 0.3) {

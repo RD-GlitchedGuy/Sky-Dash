@@ -54,6 +54,7 @@
 <!-- Hauptmenü -->
 <section id="scr-menu" class="screen hidden">
   <h1 class="logo"><span class="gtext" data-t="SKY DASH">SKY DASH</span></h1>
+  <div class="byline">ein Spiel von RD-GlitchedGuy · Sky Games</div>
   <div class="menu-row">
     <button class="round side" id="btnIcons" aria-label="Icons"><canvas id="menuIcon" width="96" height="96"></canvas></button>
     <button class="round play" id="btnPlay" aria-label="Spielen"><span>▶</span></button>
@@ -63,6 +64,7 @@
     <button class="pill" id="btnCredits">Credits</button>
     <button class="pill" id="btnFull">Vollbild</button>
   </div>
+  <div class="stats" id="stats"></div>
   <div class="hint">Leertaste, Klick oder Tippen = Springen</div>
 </section>
 
@@ -98,6 +100,8 @@
     <label class="row">Effekte <input type="range" id="setSfx" min="0" max="100"></label>
     <label class="row">Prozent anzeigen <input type="checkbox" id="setPct"></label>
     <label class="row">Leuchteffekte <input type="checkbox" id="setGlow"></label>
+    <p class="small">Dein Fortschritt wird automatisch in diesem Browser gespeichert. Mit dem Code kannst du ihn sichern oder auf ein anderes Gerät mitnehmen.</p>
+    <div class="btn-row"><button class="pill" id="btnExport">Spielstand sichern</button><button class="pill" id="btnImport">Spielstand laden</button></div>
     <button class="pill danger" id="btnReset">Fortschritt löschen</button>
   </div>
 </section>
@@ -108,9 +112,9 @@
   <div class="panel credits">
     <h2>Credits</h2>
     <p class="studio"><span class="gtext" data-t="SKY GAMES">SKY GAMES</span></p>
-    <p><b>Logo-Animation:</b> Sky Games</p>
-    <p><b>Spielidee &amp; Leveldesign:</b> Sky Games (rd-glitchedguy)</p>
-    <p><b>Programmierung:</b> Sky Games mit Claude (Anthropic)</p>
+    <p><b>Ein Spiel von:</b> RD-GlitchedGuy</p>
+    <p><b>Spielidee, Leveldesign, Wave-Modus &amp; Logo-Animation:</b> RD-GlitchedGuy (Sky Games)</p>
+    <p><b>Code-Hilfe:</b> Claude (Anthropic)</p>
     <p><b>Grafik &amp; Musik:</b> komplett selbst erzeugt – im Code gezeichnet und live im Browser komponiert</p>
     <p><b>Schrift:</b> „Lilita One“ von Juan Montoreano (SIL Open Font License, über Google Fonts)</p>
     <p class="small">Inspiriert von <i>Geometry Dash</i> von RobTop Games. Sky Dash ist ein eigenständiges Fanprojekt, nicht mit RobTop Games verbunden und verwendet keine Grafiken, Sounds oder Musik aus Geometry Dash.</p>

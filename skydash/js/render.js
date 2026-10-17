@@ -13,7 +13,7 @@
   const WHITE = [255, 255, 255], BLACK = [0, 0, 0];
   const PORTAL = {
     [T.SHIP]: R.hex('#ff5ad6'), [T.CUBE]: R.hex('#5cff7a'),
-    [T.GUP]: R.hex('#ffe14f'), [T.GDOWN]: R.hex('#4fc8ff')
+    [T.GUP]: R.hex('#ffe14f'), [T.GDOWN]: R.hex('#4fc8ff'), [T.WAVE]: R.hex('#4fffe0')
   };
   const YELLOW = R.hex('#ffe14f'), BLUE = R.hex('#4fc8ff'), GOLD = R.hex('#ffcc33');
 
@@ -158,6 +158,24 @@
     ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(2, U * 0.06); ctx.lineJoin = 'miter'; ctx.stroke();
   }
 
+  // Kreissäge: dreht sich, schwarz mit weißem Rand
+  function saw(o, col, pulse, t, camX) {
+    const U = R.U, cx = R.sx(o.cx, camX), cy = R.sy(o.cy), r = o.r * U, n = Math.max(8, Math.round(o.r * 12));
+    if (R.glow) glowCircle(cx, cy, r * 1.5, col.accent, 0.3 + 0.25 * pulse);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-t * 7);
+    ctx.beginPath();
+    for (let i = 0; i < n * 2; i++) {
+      const a = i * Math.PI / n, rr = i % 2 ? r * 0.78 : r;
+      ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    }
+    ctx.closePath(); ctx.fillStyle = '#000'; ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(2, U * 0.05); ctx.stroke();
+    ctx.strokeStyle = R.rgb(col.accent, 0.8); ctx.lineWidth = U * 0.06;
+    ctx.beginPath(); ctx.arc(0, 0, r * 0.5, 0, 7); ctx.stroke();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0, 0, r * 0.15, 0, 7); ctx.fill();
+    ctx.restore();
+  }
+
   function glowCircle(cx, cy, r, c, a) {
     const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
     g.addColorStop(0, R.rgb(c, a)); g.addColorStop(1, R.rgb(c, 0));
@@ -206,7 +224,7 @@
     // Symbol
     ctx.fillStyle = R.rgb(WHITE, 0.9);
     ctx.font = `${U * 0.45}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const sym = { [T.SHIP]: '✈', [T.CUBE]: '■', [T.GUP]: '▲', [T.GDOWN]: '▼' }[o.t];
+    const sym = { [T.SHIP]: '✈', [T.CUBE]: '■', [T.GUP]: '▲', [T.GDOWN]: '▼', [T.WAVE]: '➤' }[o.t];
     ctx.fillText(sym, cx, cy);
   }
 
@@ -256,6 +274,7 @@
             case T.ORB: orb(o, YELLOW, pulse, t, used.indexOf(o.id) >= 0, camX); break;
             case T.BORB: orb(o, BLUE, pulse, t, used.indexOf(o.id) >= 0, camX); break;
             case T.PAD: pad(o, pulse, t, camX); break;
+            case T.SAW: saw(o, col, pulse, t, camX); break;
             case T.COIN: if (used.indexOf(o.id) < 0) coin(o, t, camX); break;
             default: if (PORTAL[o.t]) portal(o, t, camX);
           }
@@ -332,6 +351,34 @@
     ctx.beginPath(); ctx.moveTo(-s * 0.45, s * 0.14); ctx.lineTo(s * 0.25, s * 0.14); ctx.lineTo(s * 0.42, s * 0.21);
     ctx.lineTo(s * 0.25, s * 0.28); ctx.lineTo(-s * 0.45, s * 0.28); ctx.closePath(); ctx.fill(); ctx.stroke();
     ctx.restore();
+  };
+
+  // Wave: Pfeil-Figur
+  R.wave = function (cx, cy, size, rot, c1, c2) {
+    const s = size;
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(rot);
+    ctx.fillStyle = c1; ctx.strokeStyle = '#000'; ctx.lineWidth = s * 0.08; ctx.lineJoin = 'miter';
+    ctx.beginPath(); ctx.moveTo(s * 0.5, 0); ctx.lineTo(-s * 0.4, -s * 0.38); ctx.lineTo(-s * 0.18, 0); ctx.lineTo(-s * 0.4, s * 0.38); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = c2;
+    ctx.beginPath(); ctx.moveTo(s * 0.22, 0); ctx.lineTo(-s * 0.2, -s * 0.16); ctx.lineTo(-s * 0.08, 0); ctx.lineTo(-s * 0.2, s * 0.16); ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  };
+
+  // Wave-Spur: harte Zickzack-Linie
+  R.waveTrail = function (pts, c1, c2, camX) {
+    if (pts.length < 2) return;
+    const line = (w, col, a) => {
+      ctx.strokeStyle = col; ctx.globalAlpha = a; ctx.lineWidth = w; ctx.lineJoin = 'miter'; ctx.lineCap = 'butt';
+      ctx.beginPath();
+      pts.forEach((p, i) => { const x = R.sx(p[0], camX), y = R.sy(p[1]); if (i) ctx.lineTo(x, y); else ctx.moveTo(x, y); });
+      ctx.stroke(); ctx.globalAlpha = 1;
+    };
+    if (R.glow) line(R.U * 0.55, R.rgb(c2), 0.25);
+    line(R.U * 0.3, '#000', 1);
+    line(R.U * 0.2, R.rgb(c2), 1);
+    line(R.U * 0.07, '#fff', 0.8);
   };
 
   R.trail = function (pts, c, width, camX) {

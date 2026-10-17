@@ -15,7 +15,8 @@
 //   orb X Y | borb X Y     gelber / blauer Ring
 //   pad X Y                Sprungpad            coin X Y      Münze
 //   deco X Y [B] [H]       Deko-Block im Hintergrund (keine Kollision)
-//   ship X [Y] | cube X [Y] | gup X [Y] | gdown X [Y]   Portale
+//   ship X [Y] | cube X [Y] | wave X [Y] | gup X [Y] | gdown X [Y]   Portale
+//   saw X Y [Größe]        Kreissäge (Größe = Durchmesser in Blöcken)
 //   def NAME ... enddef    Muster definieren (relative Koordinaten)
 //   use NAME X [Y]         Muster einsetzen
 //   loop NAME X ANZAHL ABSTAND [Y]   Muster wiederholen
@@ -32,7 +33,7 @@
 
 namespace fs = std::filesystem;
 
-enum Type { BLOCK = 1, SPIKE, CSPIKE, ORB, BORB, PAD, SHIP, CUBE, GUP, GDOWN, COIN, SLAB, DECO };
+enum Type { BLOCK = 1, SPIKE, CSPIKE, ORB, BORB, PAD, SHIP, CUBE, GUP, GDOWN, COIN, SLAB, DECO, WAVE, SAW };
 
 struct Obj { int t; double x, y, w, h; };
 struct ColorTrig { double x; std::string bg, ground, accent; };
@@ -128,6 +129,8 @@ class Compiler {
     else if (c == "pad") add(PAD, n(1, 0, true), n(2, 0, true));
     else if (c == "coin") add(COIN, n(1, 0, true), n(2, 0, true));
     else if (c == "ship") add(SHIP, n(1, 0, true), n(2, 0, false));
+    else if (c == "wave") add(WAVE, n(1, 0, true), n(2, 0, false));
+    else if (c == "saw") { double sz = n(3, 1, false); add(SAW, n(1, 0, true), n(2, 0, true), sz, sz); }
     else if (c == "cube") add(CUBE, n(1, 0, true), n(2, 0, false));
     else if (c == "gup") add(GUP, n(1, 0, true), n(2, 0, false));
     else if (c == "gdown") add(GDOWN, n(1, 0, true), n(2, 0, false));
@@ -213,6 +216,7 @@ class Compiler {
       auto& b = lv.objs[i];
       o << (i ? "," : "") << (i % 12 == 0 ? "\n  " : "") << "[" << b.t << "," << fmt(b.x) << "," << fmt(b.y);
       if ((b.t == BLOCK || b.t == DECO) && (b.w != 1 || b.h != 1)) o << "," << fmt(b.w) << "," << fmt(b.h);
+      else if (b.t == SAW && b.w != 1) o << "," << fmt(b.w);
       if (b.t == SLAB && b.w != 1) o << "," << fmt(b.w);
       o << "]";
     }
