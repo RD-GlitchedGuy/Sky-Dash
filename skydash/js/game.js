@@ -1,7 +1,7 @@
 /* Sky Dash — Spielsteuerung, Menüs, Speicherstand (Sky Games) */
 (function () {
   'use strict';
-  const P = SDPhys, R = SDRender, A = SDAudio, T = P.T, NET = window.SDOnline;
+  const P = SDPhys, R = SDRender, A = SDAudio, T = P.T, NET = window.SDOnline || { players: {}, update() {}, step() {}, count: () => 0, connected: () => false, last: {}, status: 'error', error: 'Online-Datei fehlt – bitte js/online.js hochladen.', joinPublic() {}, create() {}, join() {}, leave() {} };
   const $ = id => document.getElementById(id);
   const cv = $('game');
   R.init(cv);
