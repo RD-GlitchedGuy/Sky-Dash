@@ -11,7 +11,7 @@
   const COLORS = ['#00eaff', '#5cff5c', '#ffe14f', '#ff9d00', '#ff4040', '#ff4fd8', '#a45cff', '#3d6bff',
                   '#ffffff', '#8a8a8a', '#1e1e1e', '#7affd6', '#ffb3e6', '#b6ff3b'];
   let save = {
-    levels: {}, icon: { id: 0, c1: '#00eaff', c2: '#ffe14f' },
+    levels: {}, icon: { id: 0, c1: '#b6ff3b', c2: '#00eaff' },
     settings: { music: 70, sfx: 80, pct: true, glow: true }
   };
   try {
@@ -34,6 +34,41 @@
   let col = null, colTarget = null, ceil = 0, flash = 0;
   let camX = 0, menuCam = 0, menuCube = { y: 0, vy: 0, rot: 0, next: 1 };
   let levelSongOn = false;
+  let menuCol = null;
+
+  // ---------- Sky-Games-Logo-Intro ----------
+  const introEl = $('intro'), plane = $('introPlane'), sun = $('introSun'), loader = $('loader');
+  (function () {
+    const ns = 'http://www.w3.org/2000/svg', rays = $('introRays');
+    for (let k = 0; k < 16; k++) {
+      const a = k * Math.PI / 8, main = k % 2 === 0, r1 = main ? 54 : 56, r2 = main ? 76 : 68;
+      const l = document.createElementNS(ns, 'line');
+      l.setAttribute('x1', (Math.cos(a) * r1).toFixed(1)); l.setAttribute('y1', (Math.sin(a) * r1).toFixed(1));
+      l.setAttribute('x2', (Math.cos(a) * r2).toFixed(1)); l.setAttribute('y2', (Math.sin(a) * r2).toFixed(1));
+      rays.appendChild(l);
+    }
+  })();
+  const I_FLY = 1.8, I_PAUSE = 0.5, I_GROW = 2.6, I_LOAD = 1.2;
+  let fontsReady = false;
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fontsReady = true; }); else fontsReady = true;
+  setTimeout(() => { fontsReady = true; }, 4000);
+  function introFrame(t) {
+    const easeOut = x => 1 - Math.pow(1 - x, 3), easeIn = x => x * x * x;
+    const p = easeOut(Math.min(t / I_FLY, 1));
+    plane.setAttribute('transform', `translate(${(800 - 352 * p).toFixed(1)},${(700 - 330 * p).toFixed(1)}) rotate(-45) scale(0.95)`);
+    const g = Math.max(0, Math.min((t - I_FLY - I_PAUSE) / I_GROW, 1));
+    sun.setAttribute('transform', `translate(264,184) scale(${(1 + 23 * easeIn(g)).toFixed(3)})`);
+    const total = I_FLY + I_PAUSE + I_GROW;
+    loader.classList.toggle('on', t > total);
+    if (t > total + I_LOAD && fontsReady) endIntro();
+  }
+  introEl.addEventListener('pointerdown', () => { A.init(); endIntro(); });
+  function endIntro() {
+    if (mode !== 'intro') return;
+    introEl.classList.add('out');
+    setTimeout(() => introEl.classList.add('hidden'), 500);
+    toMenu('menu');
+  }
 
   function colorsAt(lv, x) {
     let c = lv.colors[0];
@@ -229,7 +264,7 @@
     mode = 'pause'; hold = false;
     A.stop(); levelSongOn = false;
     const sv = lvSave(L.id);
-    $('pauseTitle').textContent = L.name;
+    $('pauseTitle').innerHTML = `<span class="gtext" data-t="${L.name}">${L.name}</span>`;
     $('pauseStats').innerHTML = `Versuch <b>${attempt}</b> · Bestwert <b>${sv.best}%</b> · Übung <b>${sv.practice}%</b>`;
     show('pause');
   }
@@ -283,7 +318,7 @@
     setTimeout(() => {
       if (mode !== 'play') return;
       mode = 'complete';
-      $('cTitle').textContent = practice ? 'ÜBUNG GESCHAFFT!' : 'LEVEL GESCHAFFT!';
+      { const tt = practice ? 'ÜBUNG GESCHAFFT!' : 'LEVEL GESCHAFFT!'; $('cTitle').innerHTML = `<span class="gtext" data-t="${tt}">${tt}</span>`; }
       const total = L.coinObjs.length;
       $('cStats').innerHTML = `Versuche <b>${attempt}</b> · Sprünge <b>${jumps}</b> · Zeit <b>${playTime.toFixed(1)} s</b>` +
         (!practice ? `<br>★ <b>${L.stars}</b> Sterne verdient${newCoins ? ` · <b>${newCoins}</b> neue Münze${newCoins > 1 ? 'n' : ''}` : ''}` : '');
@@ -322,7 +357,7 @@
   // ---------- Eingabe ----------
   function press() {
     A.init();
-    if (mode === 'intro') { introT = 99; return; }
+    if (mode === 'intro') { endIntro(); return; }
     if (mode === 'play') hold = true;
   }
   function release() { hold = false; }
@@ -446,20 +481,27 @@
     R.drawFx(camX);
     ctx.restore();
     // neuer Bestwert
-    if (flash > 0) R.text('Neuer Bestwert! ' + lvSave(L.id).best + '%', R.W / 2, R.H * 0.32, R.U * 0.7, '#ffd23f', 'center', Math.min(1, flash * 2));
+    if (flash > 0) R.text('Neuer Bestwert! ' + lvSave(L.id).best + '%', R.W / 2, R.H * 0.32, R.U * 0.7, 'gold', 'center', Math.min(1, flash * 2));
     if (s.done && doneT > 0.3) {
       const k = Math.min(1, (doneT - 0.3) / 0.35);
-      R.text(practice ? 'ÜBUNG GESCHAFFT!' : 'LEVEL GESCHAFFT!', R.W / 2, R.H * 0.4, R.U * (0.4 + 0.75 * k), '#ffd23f', 'center', k);
+      R.text(practice ? 'ÜBUNG GESCHAFFT!' : 'LEVEL GESCHAFFT!', R.W / 2, R.H * 0.4, R.U * (0.4 + 0.85 * k), 'gold', 'center', k);
     }
   }
 
   function drawMenuBg(dt, pulse) {
     menuCam += dt * 7;
-    const t = now * 0.05, k = (Math.sin(t) + 1) / 2;
-    const c1 = [[43, 31, 214], [122, 18, 201], [10, 122, 138], [160, 16, 80]];
-    const i = Math.floor(now / 12) % 4, f = Math.min(1, (now % 12) / 2);
-    const bg = R.mix(c1[(i + 3) % 4], c1[i], f);
-    const mc = { bg, ground: R.mix(bg, [60, 120, 255], 0.5), accent: R.mix([0, 234, 255], [255, 79, 216], k) };
+    // In der Levelauswahl nimmt der Hintergrund die Farbe des Levels an
+    let want;
+    if (menuScreen === 'levels') want = colorsAt(window.LEVELS[lvIdx], 0);
+    else {
+      const c1 = [[31, 98, 255], [196, 18, 143], [15, 158, 138], [255, 106, 0], [110, 40, 230]];
+      const i = Math.floor(now / 10) % c1.length;
+      want = { bg: c1[i], ground: R.mix(c1[i], [0, 0, 0], 0.25), accent: R.mix(c1[i], [255, 255, 255], 0.5) };
+    }
+    if (!menuCol) menuCol = want;
+    const kk = Math.min(1, dt * 2.5);
+    menuCol = { bg: R.mix(menuCol.bg, want.bg, kk), ground: R.mix(menuCol.ground, want.ground, kk), accent: R.mix(menuCol.accent, want.accent, kk) };
+    const mc = menuCol;
     R.background(mc, menuCam, pulse, now);
     R.ground(mc, menuCam, pulse, 0);
     // Würfel hüpft am Boden entlang
@@ -479,8 +521,7 @@
     ctx.clearRect(0, 0, R.W, R.H);
     if (mode === 'intro') {
       introT += dt;
-      R.intro(introT);
-      if (introT > 3.1) toMenu('menu');
+      introFrame(introT);
     } else if (mode === 'play') {
       updatePlay(dt); R.updateFx(dt); drawPlay(pulse);
     } else if (mode === 'pause' || mode === 'complete') {

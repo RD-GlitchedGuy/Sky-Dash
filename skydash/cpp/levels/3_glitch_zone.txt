@@ -101,9 +101,19 @@ use stepup 386
 spike 394 0 2
 spike 398 0 9
 orb 400 3
-coin 403 5
+coin 402 4
 orb 405 2
 spike 414 0
 use stepup 420
 spike 428 0 3
 spike 438 0 2
+
+# --- Deko ---
+deco 107 3 3 1
+deco 130 3 40 0.5
+deco 130 6 40 0.5
+deco 212 2 8 1
+deco 272 1 2 1
+deco 277 2 2 1
+deco 282 3 2 1
+deco 362 2 8 1

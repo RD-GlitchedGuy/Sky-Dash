@@ -14,6 +14,7 @@
 //   cspike X Y [n]         hängender Stachel
 //   orb X Y | borb X Y     gelber / blauer Ring
 //   pad X Y                Sprungpad            coin X Y      Münze
+//   deco X Y [B] [H]       Deko-Block im Hintergrund (keine Kollision)
 //   ship X [Y] | cube X [Y] | gup X [Y] | gdown X [Y]   Portale
 //   def NAME ... enddef    Muster definieren (relative Koordinaten)
 //   use NAME X [Y]         Muster einsetzen
@@ -31,7 +32,7 @@
 
 namespace fs = std::filesystem;
 
-enum Type { BLOCK = 1, SPIKE, CSPIKE, ORB, BORB, PAD, SHIP, CUBE, GUP, GDOWN, COIN, SLAB };
+enum Type { BLOCK = 1, SPIKE, CSPIKE, ORB, BORB, PAD, SHIP, CUBE, GUP, GDOWN, COIN, SLAB, DECO };
 
 struct Obj { int t; double x, y, w, h; };
 struct ColorTrig { double x; std::string bg, ground, accent; };
@@ -121,6 +122,7 @@ class Compiler {
       double x = n(1, 0, true), y = n(2, 0, true); int cnt = (int)n(3, 1, false);
       for (int i = 0; i < cnt; ++i) add(c == "spike" ? SPIKE : CSPIKE, x + i, y);
     }
+    else if (c == "deco") { add(DECO, n(1, 0, true), n(2, 0, true), n(3, 1, false), n(4, 1, false)); }
     else if (c == "orb") add(ORB, n(1, 0, true), n(2, 0, true));
     else if (c == "borb") add(BORB, n(1, 0, true), n(2, 0, true));
     else if (c == "pad") add(PAD, n(1, 0, true), n(2, 0, true));
@@ -210,7 +212,7 @@ class Compiler {
     for (size_t i = 0; i < lv.objs.size(); ++i) {
       auto& b = lv.objs[i];
       o << (i ? "," : "") << (i % 12 == 0 ? "\n  " : "") << "[" << b.t << "," << fmt(b.x) << "," << fmt(b.y);
-      if (b.t == BLOCK && (b.w != 1 || b.h != 1)) o << "," << fmt(b.w) << "," << fmt(b.h);
+      if ((b.t == BLOCK || b.t == DECO) && (b.w != 1 || b.h != 1)) o << "," << fmt(b.w) << "," << fmt(b.h);
       if (b.t == SLAB && b.w != 1) o << "," << fmt(b.w);
       o << "]";
     }

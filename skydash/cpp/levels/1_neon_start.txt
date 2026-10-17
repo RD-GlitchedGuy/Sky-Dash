@@ -1,106 +1,97 @@
-# Level 1 – Neon Start (nur Würfel, Pads und Ringe)
+# Level 1 – Neon Start (leicht: Würfel + ein ruhiger Schiffsteil)
 name Neon Start
 diff easy
 stars 2
 speed 10.4
-bpm 128
+bpm 140
 song 0
-length 440
-color 0 #2b1fd6 #2442ff #00eaff
-
-# Muster: kleine Plattform mit Stachel davor
-def stepup
-spike 0 0
-block 3 0 3 1
-enddef
+length 470
+color 0 #1f62ff #0a49d6 #6fe3ff
 
 # --- Aufwärmen ---
-spike 22 0
-spike 32 0
-spike 42 0 2
-use stepup 52
-spike 60 0 2
+spike 18 0
+spike 28 0
+spike 38 0 2
+block 48 0 4 1
+deco 49 1 2 1
+spike 52 0 2
+spike 62 0 2
 
 # --- Treppe ---
-block 68 0 2 1
-block 72 0 2 2
-block 76 0 2 3
-spike 79 0 3
-spike 88 0 3
+block 72 0 2 1
+block 76 0 2 2
+block 80 0 2 3
+deco 80 3 2 1
+spike 82 0 4
+spike 94 0
+spike 100 0 2
 
-# --- Pad über Stachelreihe ---
-pad 98 0
-spike 100 0 3
-coin 103 4
+# --- Pad ---
+pad 110 0
+spike 112 0 4
+coin 114 4
 
-# --- gelber Ring über langer Grube ---
-spike 114 0 5
-orb 116 2
+# --- Schiff (breit und ruhig) ---
+color 122 #c4128f #9b0d75 #ffb3f0
+ship 126 0
+block 140 0 1 3
+spike 140 3
+block 152 7 1 3
+cspike 152 6
+block 164 0 1 4
+spike 164 4
+block 176 6 1 4
+cspike 176 5
+block 188 0 16 2
+block 188 8 16 2
+spike 193 2
+spike 199 2
+cspike 196 7
+block 210 3 8 7
+deco 210 2 8 1
+cube 214 0
 
-# --- Plattformen ---
-block 128 0 3 1
-spike 131 0 2
-block 133 0 3 1
-spike 136 0 3
-block 139 0 3 1
-spike 142 0 2
+# --- Würfel 2 ---
+color 222 #1f62ff #0a49d6 #6fe3ff
+spike 228 0
+spike 236 0 2
+spike 246 0 4
+orb 248 2
+block 258 0 3 1
+spike 261 0 2
+block 263 0 3 1
+spike 266 0 2
+block 268 0 3 1
+spike 278 0 2
 
-color 150 #7a12c9 #9b1cff #ff4fd8
+# --- Pad auf Turm ---
+color 286 #0f9e8a #087a6a #b6ff3b
+pad 292 0
+spike 294 0 2
+block 297 0 3 3
+deco 297 3 3 1
+spike 300 0 4
+coin 306 2
 
-# --- niedriger Tunnel: nicht springen! ---
-block 158 2 8 1
-spike 160 3
-spike 163 3
-spike 168 0
-spike 175 0 2
-spike 183 0 3
-
-# --- Säulen ---
-block 194 0 1 1
-spike 195 0 3
-block 198 0 1 2
-spike 199 0 3
-block 202 0 1 1
-spike 203 0 2
-
-# --- Rhythmus ---
-loop stepup 212 3 10
-coin 245 4
-orb 243 2
-spike 241 0 6
-
-color 262 #0a7a8a #00b3a4 #b6ff3b
-
-# --- Pad-Kette auf Blöcke ---
-pad 270 0
-spike 272 0 3
-block 276 0 4 2
-spike 280 0 3
-block 284 0 3 1
-spike 287 0 2
-pad 291 0
-spike 293 0 2
-block 295 0 3 3
-spike 298 0 4
-
-# --- Ring-Doppel ---
-spike 314 0 10
+# --- Ringe ---
+spike 314 0 9
 orb 316 2
-orb 320 3
-block 328 0 3 1
+orb 320 2
+block 330 0 3 1
+spike 333 0 2
 
 # --- Finale ---
-spike 338 0
-spike 344 0 2
-use stepup 350
-spike 358 0 3
+color 340 #ff6a00 #c44d00 #ffe14f
+spike 348 0
+spike 356 0 2
 block 366 0 2 1
 block 370 0 2 2
 spike 372 0 3
-coin 380 1
-spike 384 0 3
-spike 394 0
-spike 402 0 2
-spike 410 0 3
-
-color 418 #e0408a #ff6b3d #ffe14f
+coin 379 1
+spike 384 0 2
+spike 396 0
+spike 404 0 2
+block 414 0 4 1
+spike 418 0 3
+spike 430 0 2
+spike 440 0

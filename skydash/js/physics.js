@@ -10,19 +10,20 @@
     ORB: 19.5,       // gelber Ring
     BORB: 10,        // blauer Ring (dreht Schwerkraft)
     TERM: 34,        // max. Fallgeschwindigkeit
-    SHIP_ACC: 60,    // Schiff: Beschleunigung
-    SHIP_MAX: 12,    // Schiff: max. Steig-/Sinkgeschwindigkeit
+    SHIP_ACC: 46,    // Schiff: Beschleunigung
+    SHIP_MAX: 10,    // Schiff: max. Steig-/Sinkgeschwindigkeit
     SHIP_PAD: 13,
     SHIP_ORB: 11,
     TOP: 10,         // Decke der Welt
     DT: 1 / 240,     // fester Physik-Schritt
-    BUF: 0.1,        // Klick-Puffer für Ringe
-    TOL: 0.32        // Toleranz beim Landen
+    BUF: 0.15,       // Klick-Puffer für Ringe
+    TOL: 0.45,       // Toleranz beim Landen
+    CORE: 0.3        // innere Hitbox: nur sie stirbt an Blockkanten (wie im Original)
   };
 
   const T = {
     BLOCK: 1, SPIKE: 2, CSPIKE: 3, ORB: 4, BORB: 5, PAD: 6,
-    SHIP: 7, CUBE: 8, GUP: 9, GDOWN: 10, COIN: 11, SLAB: 12
+    SHIP: 7, CUBE: 8, GUP: 9, GDOWN: 10, COIN: 11, SLAB: 12, DECO: 13
   };
 
   function prepare(level) {
@@ -34,7 +35,7 @@
       switch (t) {
         case T.SPIKE: ob.bx = x + 0.36; ob.by = y; ob.bw = 0.28; ob.bh = 0.5; break;
         case T.CSPIKE: ob.bx = x + 0.36; ob.by = y + 0.5; ob.bw = 0.28; ob.bh = 0.5; break;
-        case T.ORB: case T.BORB: ob.bx = x - 0.15; ob.by = y - 0.15; ob.bw = 1.3; ob.bh = 1.3; break;
+        case T.ORB: case T.BORB: ob.bx = x - 0.3; ob.by = y - 0.3; ob.bw = 1.6; ob.bh = 1.6; break;
         case T.PAD: ob.bx = x; ob.by = y; ob.bw = 1; ob.bh = 0.4; break;
         case T.SHIP: case T.CUBE: case T.GUP: case T.GDOWN:
           ob.bx = x; ob.by = y; ob.bw = 1; ob.bh = 3; break;
@@ -86,7 +87,7 @@
     for (let c = c0; c <= c0 + 3; c++) {
       const bk = L.buckets[c]; if (!bk) continue;
       for (const o of bk) {
-        if (o.solid || !hit(s, o)) continue;
+        if (o.solid || o.t === T.DECO || !hit(s, o)) continue;
         if (o.t === T.SPIKE || o.t === T.CSPIKE) {
           if (s.x + 0.12 < o.bx + o.bw && s.x + 0.88 > o.bx &&
               s.y + 0.12 < o.by + o.bh && s.y + 0.88 > o.by) { die(s, o); return; }
@@ -151,7 +152,11 @@
         } else if (py + 1 <= bot + C.TOL && s.vy >= -0.001) {
           if (!down) { die(s, o); return; }
           s.y = bot - 1; s.vy = 0; if (s.g === -1) s.grounded = true;
-        } else { die(s, o); return; }
+        } else {
+          // Nur sterben, wenn der Kern der Figur im Block steckt – Kanten streifen ist erlaubt
+          const k = C.CORE;
+          if (s.x + k < o.x + o.w && s.x + 1 - k > o.x && s.y + k < top && s.y + 1 - k > bot) { die(s, o); return; }
+        }
       }
     }
 

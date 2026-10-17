@@ -28,8 +28,8 @@ dann unter **Settings → Pages** den Branch `main` und `/ (root)` wählen.
 
 ## Credits
 
-- Spielidee & Leveldesign: Sky Games (rd-glitchedguy)
+- Logo-Animation, Spielidee & Leveldesign: Sky Games (rd-glitchedguy)
 - Programmierung: Sky Games mit Claude (Anthropic)
 - Grafik & Musik: komplett selbst erzeugt (im Code gezeichnet, Musik live im Browser komponiert)
-- Schrift: „Russo One“ von Jovanny Lemonad, SIL Open Font License (Google Fonts)
+- Schrift: „Lilita One“ von Juan Montoreano, SIL Open Font License (Google Fonts)
 - Inspiriert von *Geometry Dash* von RobTop Games. Sky Dash ist ein eigenständiges Fanprojekt, nicht mit RobTop Games verbunden, und enthält keine Grafiken, Sounds oder Musik aus Geometry Dash.

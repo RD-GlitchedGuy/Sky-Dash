@@ -28,8 +28,8 @@
     R.W = cv.clientWidth; R.H = cv.clientHeight;
     cv.width = Math.round(R.W * R.dpr); cv.height = Math.round(R.H * R.dpr);
     ctx.setTransform(R.dpr, 0, 0, R.dpr, 0, 0);
-    R.U = R.H / 11.6;
-    R.groundY = R.H - 1.3 * R.U;
+    R.U = R.H / 12.2;
+    R.groundY = R.H - 1.25 * R.U;
     R.camOff = Math.min(R.W / R.U * 0.3, 7);
   };
 
@@ -41,66 +41,63 @@
 
   R.background = function (col, camX, pulse, t) {
     const { W, H, U } = R;
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, R.rgb(R.mix(col.bg, BLACK, 0.45)));
-    g.addColorStop(0.7, R.rgb(col.bg));
-    g.addColorStop(1, R.rgb(R.mix(col.bg, WHITE, 0.1)));
+    // heller, kräftiger Hintergrund wie im Original
+    const top = R.mix(col.bg, WHITE, 0.06 + 0.1 * pulse), bot = R.mix(col.bg, BLACK, 0.18);
+    const g = ctx.createLinearGradient(0, 0, 0, R.groundY);
+    g.addColorStop(0, R.rgb(top)); g.addColorStop(1, R.rgb(bot));
     ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
 
-    // große Quadrate (Parallax)
-    const S = U * 3.4, px = camX * U * 0.12;
+    // große Kacheln mit Schattierung (Parallax)
+    const S = U * 4, px = camX * U * 0.1;
     const i0 = Math.floor(px / S);
     for (let i = i0 - 1; i < i0 + W / S + 2; i++) {
-      for (let j = 0; j < H / S + 1; j++) {
-        const h = hash(i, j);
-        if (h < 0.35) continue;
-        const x = i * S - px, y = j * S - (t * 3) % S * 0;
-        ctx.fillStyle = R.rgb(WHITE, 0.025 + (h - 0.35) * 0.08 + pulse * 0.02);
-        ctx.fillRect(x + 4, y + 4, S - 8, S - 8);
-        if (h > 0.8) { ctx.strokeStyle = R.rgb(WHITE, 0.08); ctx.lineWidth = 2; ctx.strokeRect(x + 12, y + 12, S - 24, S - 24); }
+      for (let j = 0; j < R.groundY / S + 1; j++) {
+        const h = hash(i, j), x = i * S - px, y = R.groundY - (j + 1) * S;
+        const tg = ctx.createLinearGradient(x, y, x + S, y + S);
+        tg.addColorStop(0, R.rgb(WHITE, 0.07 + h * 0.06));
+        tg.addColorStop(1, R.rgb(BLACK, 0.1 + h * 0.12));
+        ctx.fillStyle = tg; ctx.fillRect(x + 3, y + 3, S - 6, S - 6);
+        ctx.strokeStyle = R.rgb(BLACK, 0.18); ctx.lineWidth = 3; ctx.strokeRect(x + 3, y + 3, S - 6, S - 6);
+        if (h > 0.55) {
+          ctx.strokeStyle = R.rgb(WHITE, 0.08); ctx.lineWidth = 2;
+          ctx.strokeRect(x + S * 0.2, y + S * 0.2, S * 0.6, S * 0.6);
+        }
       }
     }
-    // schwebende Lichtpunkte
-    const px2 = camX * U * 0.35;
-    for (let k = 0; k < 40; k++) {
-      const hx = hash(k, 7), hy = hash(k, 13);
-      const span = W + 100;
-      const x = ((hx * span * 3 - px2) % span + span) % span - 50;
-      const y = hy * R.groundY * 0.95 + Math.sin(t * 0.8 + k) * 8;
-      ctx.fillStyle = R.rgb(R.mix(col.accent, WHITE, 0.5), 0.15 + 0.25 * hash(k, 3));
-      ctx.fillRect(x, y, 3, 3);
-    }
-    // Beat-Glühen
+    // Beat-Glühen von unten
     if (pulse > 0.01) {
-      const rg = ctx.createRadialGradient(W * 0.5, H * 0.55, 0, W * 0.5, H * 0.55, W * 0.7);
-      rg.addColorStop(0, R.rgb(col.accent, 0.13 * pulse));
+      const rg = ctx.createLinearGradient(0, R.groundY, 0, R.groundY - U * 6);
+      rg.addColorStop(0, R.rgb(col.accent, 0.22 * pulse));
       rg.addColorStop(1, R.rgb(col.accent, 0));
-      ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = rg; ctx.fillRect(0, 0, W, R.groundY);
     }
   };
 
   function bandTiles(col, camX, yTop, yBot, flip) {
     const { W, U } = R;
-    const g = ctx.createLinearGradient(0, yTop, 0, yBot);
-    const base = col.ground;
-    g.addColorStop(flip ? 1 : 0, R.rgb(base));
-    g.addColorStop(flip ? 0 : 1, R.rgb(R.mix(base, BLACK, 0.55)));
-    ctx.fillStyle = g; ctx.fillRect(0, yTop, W, yBot - yTop);
-    const S = U * 2.2, off = ((camX * U) % S + S) % S;
-    ctx.strokeStyle = R.rgb(BLACK, 0.25); ctx.lineWidth = 2;
+    ctx.fillStyle = R.rgb(R.mix(col.ground, BLACK, 0.25)); ctx.fillRect(0, yTop, W, yBot - yTop);
+    const S = U * 2.6, off = ((camX * U) % S + S) % S;
     for (let x = -off; x < W + S; x += S) {
-      ctx.beginPath(); ctx.moveTo(x, yTop); ctx.lineTo(x, yBot); ctx.stroke();
-      ctx.fillStyle = R.rgb(WHITE, 0.04);
-      ctx.fillRect(x + 6, flip ? yBot - S + 6 : yTop + 6, S - 12, S - 12);
+      const y0 = flip ? yBot - S : yTop;
+      const g = ctx.createLinearGradient(x, y0, x + S * 0.4, y0 + S);
+      g.addColorStop(0, R.rgb(R.mix(col.ground, WHITE, 0.18)));
+      g.addColorStop(0.55, R.rgb(col.ground));
+      g.addColorStop(1, R.rgb(R.mix(col.ground, BLACK, 0.45)));
+      ctx.fillStyle = g; ctx.fillRect(x + 2, y0 + 2, S - 4, S - 4);
+      ctx.strokeStyle = R.rgb(BLACK, 0.35); ctx.lineWidth = 3; ctx.strokeRect(x + 2, y0 + 2, S - 4, S - 4);
     }
   }
 
   function glowLine(y, col, pulse) {
     const { W } = R;
     const lg = ctx.createLinearGradient(0, 0, W, 0);
-    const c = R.mix(col.accent, WHITE, 0.6 + 0.3 * pulse);
-    lg.addColorStop(0, R.rgb(c, 0)); lg.addColorStop(0.5, R.rgb(c, 1)); lg.addColorStop(1, R.rgb(c, 0));
-    if (R.glow) { ctx.fillStyle = R.rgb(col.accent, 0.25 + 0.2 * pulse); ctx.fillRect(0, y - 4, W, 8); }
+    lg.addColorStop(0, R.rgb(WHITE, 0)); lg.addColorStop(0.5, R.rgb(WHITE, 1)); lg.addColorStop(1, R.rgb(WHITE, 0));
+    if (R.glow) {
+      const gg = ctx.createLinearGradient(0, 0, W, 0);
+      const c = R.rgb(R.mix(col.accent, WHITE, 0.3), 0.35 + 0.3 * pulse);
+      gg.addColorStop(0, R.rgb(WHITE, 0)); gg.addColorStop(0.5, c); gg.addColorStop(1, R.rgb(WHITE, 0));
+      ctx.fillStyle = gg; ctx.fillRect(0, y - 6, W, 12);
+    }
     ctx.fillStyle = lg; ctx.fillRect(0, y - 1.5, W, 3);
   }
 
@@ -120,33 +117,45 @@
   // ---------- Objekte ----------
   function block(x, y, w, h, col, pulse, camX) {
     const U = R.U, sx = R.sx(x, camX), sy = R.sy(y + h), pw = w * U, ph = h * U;
-    const g = ctx.createLinearGradient(0, sy, 0, sy + ph);
-    g.addColorStop(0, R.rgb(R.mix(col.bg, BLACK, 0.55), 0.95));
-    g.addColorStop(1, R.rgb(BLACK, 0.95));
-    ctx.fillStyle = g; ctx.fillRect(sx, sy, pw, ph);
-    // Raster innen
-    ctx.strokeStyle = R.rgb(col.accent, 0.13); ctx.lineWidth = 1.5;
-    const i0 = Math.max(0, Math.floor(camX - x - 1)), i1 = Math.min(w, Math.ceil(camX - x + R.W / U + 1));
-    for (let i = i0; i < i1; i++) for (let j = 0; j < h; j++) {
-      const ch = (j + 1 > h ? h - j : 1);
-      ctx.strokeRect(sx + i * U + U * 0.2, sy + j * U + U * 0.2, U * 0.6, Math.max(0, ch * U - U * 0.4));
+    if (R.glow) {
+      ctx.fillStyle = R.rgb(col.accent, 0.18 + 0.15 * pulse);
+      ctx.fillRect(sx - U * 0.12, sy - U * 0.12, pw + U * 0.24, ph + U * 0.24);
     }
-    const line = R.mix(col.accent, WHITE, 0.35 + 0.45 * pulse);
-    if (R.glow) { ctx.strokeStyle = R.rgb(col.accent, 0.3); ctx.lineWidth = U * 0.16; ctx.strokeRect(sx, sy, pw, ph); }
-    ctx.strokeStyle = R.rgb(line); ctx.lineWidth = Math.max(2, U * 0.05); ctx.strokeRect(sx, sy, pw, ph);
+    ctx.fillStyle = '#000'; ctx.fillRect(sx, sy, pw, ph);
+    // Kacheln innen
+    const i0 = Math.max(0, Math.floor(camX - x - 1)), i1 = Math.min(w, Math.ceil(camX - x + R.W / U + 1));
+    for (let i = i0; i < i1; i++) for (let j = 0; j < Math.ceil(h); j++) {
+      const ch = Math.min(1, h - j);
+      const cx = sx + i * U, cy = sy + j * U;
+      const g = ctx.createLinearGradient(cx, cy, cx, cy + ch * U);
+      g.addColorStop(0, R.rgb(R.mix(col.bg, BLACK, 0.55), 0.9)); g.addColorStop(1, 'rgba(0,0,0,0.9)');
+      ctx.fillStyle = g; ctx.fillRect(cx + U * 0.1, cy + U * 0.1, U * 0.8, Math.max(0, ch * U - U * 0.2));
+      ctx.strokeStyle = R.rgb(WHITE, 0.22); ctx.lineWidth = 1.5;
+      ctx.strokeRect(cx + U * 0.1, cy + U * 0.1, U * 0.8, Math.max(0, ch * U - U * 0.2));
+    }
+    ctx.strokeStyle = R.rgb(R.mix(WHITE, col.accent, 0.15 - 0.15 * pulse)); ctx.lineWidth = Math.max(2, U * 0.06);
+    ctx.strokeRect(sx + 1, sy + 1, pw - 2, ph - 2);
+  }
+
+  function decoBlock(x, y, w, h, col, camX) {
+    const U = R.U, sx = R.sx(x, camX), sy = R.sy(y + h);
+    const g = ctx.createLinearGradient(0, sy, 0, sy + h * U);
+    g.addColorStop(0, R.rgb(R.mix(col.bg, BLACK, 0.5), 0.55)); g.addColorStop(1, R.rgb(R.mix(col.bg, BLACK, 0.5), 0.05));
+    ctx.fillStyle = g; ctx.fillRect(sx, sy, w * U, h * U);
+    ctx.strokeStyle = R.rgb(WHITE, 0.25); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(sx, sy + h * U); ctx.lineTo(sx, sy); ctx.lineTo(sx + w * U, sy); ctx.lineTo(sx + w * U, sy + h * U); ctx.stroke();
   }
 
   function spike(x, y, down, col, pulse, camX) {
     const U = R.U, sx = R.sx(x, camX);
-    const base = down ? R.sy(y + 1) : R.sy(y), tip = down ? R.sy(y + 0.08) : R.sy(y + 0.92);
+    const base = down ? R.sy(y + 1) : R.sy(y), tip = down ? R.sy(y + 0.06) : R.sy(y + 0.94);
     ctx.beginPath();
-    ctx.moveTo(sx + U * 0.04, base); ctx.lineTo(sx + U * 0.5, tip); ctx.lineTo(sx + U * 0.96, base); ctx.closePath();
+    ctx.moveTo(sx + U * 0.03, base); ctx.lineTo(sx + U * 0.5, tip); ctx.lineTo(sx + U * 0.97, base); ctx.closePath();
+    if (R.glow) { ctx.strokeStyle = R.rgb(col.accent, 0.3 + 0.25 * pulse); ctx.lineWidth = U * 0.2; ctx.lineJoin = 'round'; ctx.stroke(); }
     const g = ctx.createLinearGradient(0, tip, 0, base);
-    g.addColorStop(0, R.rgb(R.mix(col.bg, BLACK, 0.4))); g.addColorStop(1, R.rgb(BLACK));
+    g.addColorStop(0, '#000'); g.addColorStop(1, R.rgb(R.mix(col.bg, BLACK, 0.6)));
     ctx.fillStyle = g; ctx.fill();
-    if (R.glow) { ctx.strokeStyle = R.rgb(col.accent, 0.35); ctx.lineWidth = U * 0.14; ctx.stroke(); }
-    ctx.strokeStyle = R.rgb(R.mix(col.accent, WHITE, 0.5 + 0.4 * pulse)); ctx.lineWidth = Math.max(2, U * 0.05);
-    ctx.lineJoin = 'round'; ctx.stroke();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(2, U * 0.06); ctx.lineJoin = 'miter'; ctx.stroke();
   }
 
   function glowCircle(cx, cy, r, c, a) {
@@ -196,7 +205,7 @@
     }
     // Symbol
     ctx.fillStyle = R.rgb(WHITE, 0.9);
-    ctx.font = `bold ${U * 0.45}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.font = `${U * 0.45}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const sym = { [T.SHIP]: '✈', [T.CUBE]: '■', [T.GUP]: '▲', [T.GDOWN]: '▼' }[o.t];
     ctx.fillText(sym, cx, cy);
   }
@@ -237,10 +246,11 @@
       for (let c = Math.max(0, c0); c <= c1; c++) {
         const bk = L.buckets[c]; if (!bk) continue;
         for (const o of bk) {
-          if (drawn.has(o.id) || (pass === 0) !== o.solid) continue;
+          if (drawn.has(o.id) || (pass === 0) !== (o.solid || o.t === T.DECO)) continue;
           drawn.add(o.id);
           switch (o.t) {
             case T.BLOCK: case T.SLAB: block(o.x, o.y, o.w, o.h, col, pulse, camX); break;
+            case T.DECO: decoBlock(o.x, o.y, o.w, o.h, col, camX); break;
             case T.SPIKE: spike(o.x, o.y, false, col, pulse, camX); break;
             case T.CSPIKE: spike(o.x, o.y, true, col, pulse, camX); break;
             case T.ORB: orb(o, YELLOW, pulse, t, used.indexOf(o.id) >= 0, camX); break;
@@ -370,89 +380,23 @@
     }
   };
 
+  R.FONT = "'Lilita One', 'Arial Black', sans-serif";
+  // Schrift mit schwarzem Rand; gold = Farbverlauf wie bei den Titeln im Original
   R.text = function (str, x, y, size, color, align, alpha) {
     ctx.save();
     ctx.globalAlpha = alpha === undefined ? 1 : alpha;
-    ctx.font = `${size}px 'Russo One', 'Arial Black', sans-serif`;
+    ctx.font = `${size}px ${R.FONT}`;
     ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle';
-    ctx.lineWidth = size * 0.16; ctx.strokeStyle = '#000'; ctx.lineJoin = 'round';
+    ctx.lineWidth = size * 0.2; ctx.strokeStyle = '#000'; ctx.lineJoin = 'round';
+    ctx.strokeText(str, x, y + size * 0.06);
     ctx.strokeText(str, x, y);
-    ctx.fillStyle = color || '#fff'; ctx.fillText(str, x, y);
+    if (color === 'gold') {
+      const g = ctx.createLinearGradient(0, y - size / 2, 0, y + size / 2);
+      g.addColorStop(0, '#fffbc4'); g.addColorStop(0.45, '#ffd21e'); g.addColorStop(1, '#ff8a00');
+      ctx.fillStyle = g;
+    } else ctx.fillStyle = color || '#fff';
+    ctx.fillText(str, x, y);
     ctx.restore();
   };
-
-  // ---------- Sky-Games-Intro ----------
-  function ease(x) { x = Math.max(0, Math.min(1, x)); return 1 - Math.pow(1 - x, 3); }
-
-  R.intro = function (t) {
-    const { W, H } = R;
-    const g = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, Math.max(W, H) * 0.7);
-    g.addColorStop(0, '#2d7fd8'); g.addColorStop(1, '#071a3d');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-    const S = Math.min(W, H) * 0.34, cx = W / 2, cy = H / 2 - S * 0.12;
-    const fade = t > 2.7 ? Math.max(0, 1 - (t - 2.7) / 0.4) : 1;
-    ctx.save(); ctx.globalAlpha = fade;
-
-    // Sonne
-    const sr = ease((t - 0.35) / 0.9) * S * 0.28;
-    if (sr > 0) {
-      ctx.save(); ctx.translate(cx, cy); ctx.rotate(t * 0.6);
-      ctx.fillStyle = 'rgba(255,214,64,0.35)';
-      for (let k = 0; k < 12; k++) {
-        ctx.rotate(Math.PI / 6);
-        ctx.beginPath(); ctx.moveTo(-sr * 0.12, sr * 1.1); ctx.lineTo(0, sr * 1.65); ctx.lineTo(sr * 0.12, sr * 1.1); ctx.fill();
-      }
-      ctx.restore();
-      glowCircle(cx, cy, sr * 2.2, [255, 214, 64], 0.5);
-      ctx.fillStyle = '#ffd640'; ctx.beginPath(); ctx.arc(cx, cy, sr, 0, 7); ctx.fill();
-    }
-
-    // weißer Rahmen
-    const fs = S * (0.6 + 0.4 * ease(t / 0.45));
-    ctx.strokeStyle = '#fff'; ctx.lineWidth = S * 0.07; ctx.globalAlpha = fade * Math.min(1, t / 0.3);
-    ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(cx - fs / 2, cy - fs / 2, fs, fs, fs * 0.22); else ctx.rect(cx - fs / 2, cy - fs / 2, fs, fs);
-    ctx.stroke();
-    ctx.globalAlpha = fade;
-
-    // Flugzeug fliegt in den Rahmen
-    const p = ease((t - 0.2) / 1.4);
-    const px = cx - W * 0.6 * (1 - p), py = cy + S * 0.9 * (1 - p) * (1 - p) + S * 0.05;
-    const ang = -0.5 * (1 - p);
-    // Kondensstreifen
-    ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = S * 0.03;
-    ctx.beginPath();
-    for (let k = 0; k <= 20; k++) {
-      const q = Math.max(0, p - k * 0.025);
-      const qx = cx - W * 0.6 * (1 - q) - S * 0.2, qy = cy + S * 0.9 * (1 - q) * (1 - q) + S * 0.05;
-      if (k === 0) ctx.moveTo(qx, qy); else ctx.lineTo(qx, qy);
-    }
-    if (p < 0.98) ctx.stroke();
-    ctx.save(); ctx.translate(px, py); ctx.rotate(ang);
-    const ps = S * 0.5;
-    ctx.fillStyle = '#fff'; ctx.strokeStyle = '#0b2a5a'; ctx.lineWidth = ps * 0.04;
-    ctx.beginPath(); // Rumpf
-    ctx.moveTo(ps * 0.5, 0); ctx.quadraticCurveTo(ps * 0.35, -ps * 0.09, 0, -ps * 0.08);
-    ctx.lineTo(-ps * 0.42, -ps * 0.06); ctx.lineTo(-ps * 0.5, -ps * 0.28); ctx.lineTo(-ps * 0.36, -ps * 0.28);
-    ctx.lineTo(-ps * 0.24, -ps * 0.06); ctx.lineTo(-ps * 0.24, ps * 0.07); ctx.lineTo(-ps * 0.45, ps * 0.07);
-    ctx.quadraticCurveTo(ps * 0.35, ps * 0.1, ps * 0.5, 0); ctx.fill(); ctx.stroke();
-    ctx.beginPath(); // Flügel
-    ctx.moveTo(ps * 0.12, 0); ctx.lineTo(-ps * 0.12, ps * 0.32); ctx.lineTo(-ps * 0.2, ps * 0.32); ctx.lineTo(-ps * 0.08, 0);
-    ctx.closePath(); ctx.fill(); ctx.stroke();
-    ctx.restore();
-
-    // Schrift
-    const ta = Math.max(0, Math.min(1, (t - 1.3) / 0.5));
-    if (ta > 0) {
-      ctx.globalAlpha = fade * ta;
-      ctx.font = `${S * 0.22}px 'Russo One', 'Arial Black', sans-serif`;
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
-      ctx.fillText('SKY GAMES', cx, cy + S * 0.78 + (1 - ta) * 10);
-      ctx.font = `${S * 0.08}px Arial, sans-serif`; ctx.fillStyle = 'rgba(255,255,255,0.75)';
-      ctx.fillText('präsentiert', cx, cy + S * 0.98);
-    }
-    ctx.restore();
-  };
-
   window.SDRender = R;
 })();

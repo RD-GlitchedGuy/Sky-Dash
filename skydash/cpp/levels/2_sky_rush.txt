@@ -18,7 +18,7 @@ enddef
 spike 20 0
 spike 28 0 2
 use stepup 38
-spike 46 0 3
+spike 47 0 2
 block 56 0 2 1
 block 60 0 2 2
 spike 62 0 3
@@ -100,3 +100,12 @@ spike 432 0 2
 use stepup 440
 spike 450 0 3
 spike 460 0
+
+# --- Deko ---
+deco 56 1 2 1
+deco 60 2 2 1
+deco 168 3 32 0.5
+deco 168 6.5 32 0.5
+deco 232 2 8 1
+deco 392 2 10 0.5
+deco 404 3.5 10 0.5
